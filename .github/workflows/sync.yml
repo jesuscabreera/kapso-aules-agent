@@ -1,0 +1,34 @@
+name: aules-sync
+
+on:
+  schedule:
+    # cada 15 minutos
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: aules-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Sincronizar Aules
+        env:
+          KAPSO_CRON_TOKEN: ${{ secrets.KAPSO_CRON_TOKEN }}
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /tmp/out.json -w "%{http_code}" -X POST \
+            "https://api.kapso.ai/platform/v1/functions/e254be06-996f-4450-aae6-7d39188c8262/invoke" \
+            -H "content-type: application/json" \
+            -d "{\"_token\":\"${KAPSO_CRON_TOKEN}\"}")
+          cat /tmp/out.json
+          echo
+          if [ "$code" != "200" ]; then
+            echo "Fallo HTTP $code"
+            exit 1
+          fi

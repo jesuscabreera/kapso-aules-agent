@@ -1,0 +1,34 @@
+name: aules-reminders
+
+on:
+  schedule:
+    # cada 5 minutos (GitHub puede retrasarlo unos minutos)
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: aules-reminders
+  cancel-in-progress: false
+
+jobs:
+  reminders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Enviar recordatorios pendientes
+        env:
+          KAPSO_CRON_TOKEN: ${{ secrets.KAPSO_CRON_TOKEN }}
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /tmp/out.json -w "%{http_code}" -X POST \
+            "https://api.kapso.ai/platform/v1/functions/dc6989a3-66d4-4b8d-9aa9-ba9f0da91add/invoke" \
+            -H "content-type: application/json" \
+            -d "{\"_token\":\"${KAPSO_CRON_TOKEN}\",\"window_minutes\":15}")
+          cat /tmp/out.json
+          echo
+          if [ "$code" != "200" ]; then
+            echo "Fallo HTTP $code"
+            exit 1
+          fi
