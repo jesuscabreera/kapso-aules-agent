@@ -22,6 +22,10 @@ jobs:
           KAPSO_CRON_TOKEN: ${{ secrets.KAPSO_CRON_TOKEN }}
         run: |
           set -euo pipefail
+          if [ -z "${KAPSO_CRON_TOKEN:-}" ]; then
+            echo "KAPSO_CRON_TOKEN no configurado todavia; salto la ejecucion."
+            exit 0
+          fi
           code=$(curl -sS -o /tmp/out.json -w "%{http_code}" -X POST \
             "https://api.kapso.ai/platform/v1/functions/e254be06-996f-4450-aae6-7d39188c8262/invoke" \
             -H "content-type: application/json" \
